@@ -12,6 +12,10 @@ source /path/to/bash-tui/bash-tui.sh
 
 画面写 stderr，结果写 stdout。
 
+## 按键
+
+↑↓ 移动，空格勾选，回车确认，q 取消，← 返回。列表行数超过 `TUI_PAGE_SIZE` 时用 `[` `]` 上下翻页。
+
 ## 接口
 
 | 函数 | 说明 |
@@ -41,6 +45,7 @@ source /path/to/bash-tui/bash-tui.sh
 | `TUI_LABEL_ALL_DESC` | `选中全部模块` | 全选行说明 |
 | `TUI_MIN_COLS` | `40` | 最小宽度 |
 | `TUI_ESC_TIMEOUT` | `0.05` | 转义序列超时 |
+| `TUI_PAGE_SIZE` | `0` | 列表一屏最多显示多少行，0 表示按终端高度铺满；超过后用 `[` `]` 翻页 |
 
 ## 验证
 

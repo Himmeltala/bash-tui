@@ -7,6 +7,10 @@ _tui_clamp_window() {
   ((total < 1)) && total=1
   ((cursor < 0)) && cursor=0
   ((cursor >= total)) && cursor=$((total - 1))
+  if ((_TUI_PAGE_ALIGN)); then
+    offset=$((cursor / window * window))
+    _TUI_PAGE_ALIGN=0
+  fi
   ((offset < 0)) && offset=0
   ((cursor < offset)) && offset=$cursor
   ((cursor >= offset + window)) && offset=$((cursor - window + 1))

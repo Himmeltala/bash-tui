@@ -49,6 +49,12 @@ _tui_clip_to 'abcdef' 3
 check_equal 'render: ASCII 截断' 'abc' "$_TUI_TEXT"
 _tui_clip_to '中文中文' 3
 check_equal 'render: 中文截断整字' '中' "$_TUI_TEXT"
+_tui_clip_to '中文中文' 3
+check_equal 'render: 中文截断宽度' '2' "$_TUI_WIDTH"
+_tui_clip_to 'abcdef' 3
+check_equal 'render: ASCII 截断宽度' '3' "$_TUI_WIDTH"
+_tui_clip_to 'abcdef' 6
+check_equal 'render: 不截断宽度' '6' "$_TUI_WIDTH"
 _tui_clip_to 'abc' 0
 check_equal 'render: 宽度为零截断' '' "$_TUI_TEXT"
 
@@ -81,6 +87,17 @@ _tui_clamp_window 5 8 5 20
 check_equal 'scroll: 光标回到窗口' '5 5' "$_TUI_CURSOR $_TUI_OFFSET"
 _tui_clamp_window 2 0 5 3
 check_equal 'scroll: 列表短于窗口' '2 0' "$_TUI_CURSOR $_TUI_OFFSET"
+
+_TUI_PAGE_ALIGN=1
+_tui_clamp_window 15 0 15 80
+check_equal 'scroll: 下翻一页对齐' '15 15' "$_TUI_CURSOR $_TUI_OFFSET"
+_TUI_PAGE_ALIGN=1
+_tui_clamp_window 79 60 15 80
+check_equal 'scroll: 末页对齐' '79 65' "$_TUI_CURSOR $_TUI_OFFSET"
+_TUI_PAGE_ALIGN=1
+_tui_clamp_window 0 15 15 80
+check_equal 'scroll: 上翻一页对齐' '0 0' "$_TUI_CURSOR $_TUI_OFFSET"
+_TUI_PAGE_ALIGN=0
 
 tui_select wrong '标题' '提示' a A >/dev/null 2>&1
 check_status 'select: 未知模式' "$TUI_ERROR" "$?"

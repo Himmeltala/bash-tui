@@ -32,16 +32,18 @@ tui_textbox() {
     cursor=$_TUI_CURSOR
     offset=$_TUI_OFFSET
 
+    tui_frame_begin
     tui_clear
     tui_title "$title"
     tui_hint '↑↓' '滚动' '空格' '翻页' 'q' '关闭'
     tui_rule
     for ((row = offset; row < offset + listh && row < n; row++)); do
       _tui_clip_to "${lines[$row]}" "$((_TUI_COLS - 2))"
-      printf ' %s\n' "$_TUI_TEXT" >&2
+      printf ' %s%s\n' "$_TUI_TEXT" "$_TUI_CLEAR_LINE" >&2
     done
     tui_rule
     tui_status "$((offset + 1))-$((offset + listh))/$n" 'q 关闭'
+    tui_frame_end
 
     if ! _tui_read_key; then
       break

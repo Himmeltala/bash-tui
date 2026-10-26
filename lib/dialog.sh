@@ -11,11 +11,13 @@ tui_input() {
 
   tui_begin
   tui_size
+  tui_frame_begin
   tui_clear
   tui_title "$title"
   tui_subtitle "$prompt"
   tui_hint '回车' '确认' 'Ctrl+C' '取消'
   tui_rule
+  tui_frame_end
   printf ' > ' >&2
   IFS= read -re -i "$default" answer || rc=$TUI_CANCEL
   tui_end
@@ -35,11 +37,13 @@ tui_confirm() {
 
   tui_begin
   tui_size
+  tui_frame_begin
   tui_clear
   tui_title "$title"
   tui_subtitle "$prompt"
   tui_hint 'y' '确认' 'n' '取消'
   tui_rule
+  tui_frame_end
   IFS= read -rsn1 key || key=''
   tui_end
 

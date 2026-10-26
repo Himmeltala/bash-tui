@@ -76,24 +76,43 @@ tui_select() {
   local row=0
   local idx=0
   local mark=''
+  local page_size=${TUI_PAGE_SIZE:-0}
+  local paging=0
+  local first=0 last=0
+
+  [[ $page_size =~ ^[0-9]+$ ]] || page_size=0
 
   tui_begin
   while :; do
     tui_size
     listh=$((_TUI_LINES - _TUI_CHROME_LINES))
+    paging=0
+    if ((page_size > 0 && rows > page_size)); then
+      paging=1
+      ((listh > page_size)) && listh=$page_size
+    fi
     ((listh > rows)) && listh=$rows
     ((listh < 1)) && listh=1
     _tui_clamp_window "$cursor" "$offset" "$listh" "$rows"
     cursor=$_TUI_CURSOR
     offset=$_TUI_OFFSET
 
+    tui_frame_begin
     tui_clear
     tui_title "$title"
     tui_subtitle "$prompt"
     if [[ "$mode" == menu ]]; then
-      tui_hint '↑↓' '移动' '回车' '选择' 'q' '取消'
+      if ((paging)); then
+        tui_hint '↑↓' '移动' '[' '上页' ']' '下页' '回车' '选择' 'q' '取消'
+      else
+        tui_hint '↑↓' '移动' '回车' '选择' 'q' '取消'
+      fi
     else
-      tui_hint '↑↓' '移动' '空格' '勾选' '回车' '确认' '←' '返回' 'q' '取消'
+      if ((paging)); then
+        tui_hint '↑↓' '移动' '[' '上页' ']' '下页' '空格' '勾选' '回车' '确认' 'q' '取消'
+      else
+        tui_hint '↑↓' '移动' '空格' '勾选' '回车' '确认' '←' '返回' 'q' '取消'
+      fi
     fi
     tui_rule
 
@@ -119,7 +138,13 @@ tui_select() {
     for ((i = 0; i < n; i++)); do
       ((on[i])) && selected=$((selected + 1))
     done
-    if [[ "$mode" == menu ]]; then
+    if ((paging)); then
+      first=$((offset + 1))
+      last=$((offset + listh))
+      ((last > rows)) && last=$rows
+      footer="第 ${first}-${last}/$rows"
+      [[ "$mode" == menu ]] || footer+="   已选 $selected/$n"
+    elif [[ "$mode" == menu ]]; then
       footer=$((cursor + 1))"/$n"
     else
       footer="已选 $selected/$n"
@@ -127,6 +152,7 @@ tui_select() {
       ((offset + listh < rows)) && footer+='   ↓ 更多'
     fi
     tui_status "$footer" 'q 取消'
+    tui_frame_end
 
     if ! _tui_read_key; then
       rc=$TUI_CANCEL
@@ -176,6 +202,15 @@ tui_select() {
         ;;
       DOWN)
         ((cursor < rows - 1)) && cursor=$((cursor + 1))
+        ;;
+      '[')
+        ((cursor >= listh)) && cursor=$((cursor - listh)) || cursor=0
+        _TUI_PAGE_ALIGN=1
+        ;;
+      ']')
+        cursor=$((cursor + listh))
+        ((cursor >= rows)) && cursor=$((rows - 1))
+        _TUI_PAGE_ALIGN=1
         ;;
       q | Q)
         rc=$TUI_CANCEL
