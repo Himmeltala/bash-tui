@@ -10,7 +10,7 @@ if [[ -n ${_BASH_TUI_LOADED:-} ]]; then
 fi
 _BASH_TUI_LOADED=1
 
-BASH_TUI_VERSION='0.2.0'
+BASH_TUI_VERSION='0.2.1'
 
 if ((BASH_VERSINFO[0] < 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] < 2))); then
   printf 'bash-tui: 需要 bash 4.2 及以上，当前 %s\n' "$BASH_VERSION" >&2

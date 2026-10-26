@@ -18,8 +18,9 @@ tui_input() {
   tui_hint '回车' '确认' 'Ctrl+C' '取消'
   tui_rule
   tui_frame_end
-  printf ' > ' >&2
+  printf ' > %s' "$_TUI_SHOW_CURSOR" >&2
   IFS= read -re -i "$default" answer || rc=$TUI_CANCEL
+  printf '%s' "$_TUI_HIDE_CURSOR" >&2
   tui_end
 
   ((rc == TUI_OK)) || return "$rc"
