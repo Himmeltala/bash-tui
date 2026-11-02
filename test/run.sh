@@ -194,6 +194,23 @@ check_status 'browse: 空列表报错' "$TUI_ERROR" "$?"
 printf 'q' | tui_menu 't' 'p' a 'A' >/dev/null 2>&1
 check_status 'menu: 非空取消' "$TUI_CANCEL" "$?"
 
+_tui_view_reset
+_TUI_VIEW_MODE='multi'
+_tui_item_add 'a' 'A' 1
+_tui_item_add 'b' 'B' 0
+_tui_selected_count
+check_equal 'checklist: 已选数' '1' "$_TUI_SELECTED"
+_tui_engine_toggle multi 1
+_tui_selected_count
+check_equal 'checklist: 勾选后已选数' '2' "$_TUI_SELECTED"
+_tui_emit_selected >/dev/null
+check_equal 'checklist: 输出两行' '2' "$( _tui_emit_selected | wc -l )"
+
+tui_checklist '空勾选' '提示'
+check_status 'checklist: 空列表报错' "$TUI_ERROR" "$?"
+tui_checklist '非法状态' '提示' a 'A' MAYBE
+check_status 'checklist: 非法状态报错' "$TUI_ERROR" "$?"
+
 tui_begin
 tui_begin
 check_equal 'core: 嵌套深度' '2' "$_TUI_DEPTH"

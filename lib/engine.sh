@@ -63,6 +63,36 @@ _tui_selected_count() {
   return 0
 }
 
+_tui_all_selected() {
+  _tui_selected_count
+  ((_TUI_SELECTED == _TUI_ITEMS_COUNT))
+}
+
+_tui_engine_toggle() {
+  local mode=$1 cursor=$2 i
+  if [[ "$mode" == 'multi_all' && "$cursor" -eq 0 ]]; then
+    if _tui_all_selected; then
+      for ((i = 0; i < _TUI_ITEMS_COUNT; i++)); do _TUI_ITEMS_STATE[i]=0; done
+    else
+      for ((i = 0; i < _TUI_ITEMS_COUNT; i++)); do _TUI_ITEMS_STATE[i]=1; done
+    fi
+    return 0
+  fi
+  if [[ "$mode" == 'multi_all' ]]; then
+    cursor=$((cursor - 1))
+  fi
+  _TUI_ITEMS_STATE[cursor]=$((1 - ${_TUI_ITEMS_STATE[$cursor]}))
+  return 0
+}
+
+_tui_emit_selected() {
+  local i
+  for ((i = 0; i < _TUI_ITEMS_COUNT; i++)); do
+    ((_TUI_ITEMS_STATE[i])) && printf '%s\n' "${_TUI_ITEMS_TAGS[$i]}"
+  done
+  return 0
+}
+
 _tui_chrome_height() {
   local subtitle=${1:-}
   local h=8

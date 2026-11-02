@@ -65,3 +65,55 @@ tui_browse() {
   done
   _tui_engine
 }
+
+_tui_checklist_common() {
+  local mode=$1 title=$2 prompt=$3
+  shift 3
+  if (($# == 0 || $# % 3 != 0)); then
+    _tui_error '勾选需要成对的标签、文本与状态'
+    return "$TUI_ERROR"
+  fi
+
+  _tui_view_reset
+  _TUI_VIEW_MODE=$mode
+  _TUI_VIEW_TITLE=$title
+  _TUI_VIEW_SUBTITLE=$prompt
+
+  local tag text state
+  while (($#)); do
+    tag=$1 text=$2 state=$3
+    case "$state" in
+      ON) state=1 ;;
+      OFF) state=0 ;;
+      *)
+        _tui_error "状态只能是 ON 或 OFF：$state"
+        return "$TUI_ERROR"
+        ;;
+    esac
+    _tui_item_add "$tag" "$text" "$state" || return "$TUI_ERROR"
+    shift 3
+  done
+
+  if [[ -n ${TUI_PRESELECT:-} ]]; then
+    local preselected i
+    while IFS= read -r preselected; do
+      [[ -n "$preselected" ]] || continue
+      for ((i = 0; i < _TUI_ITEMS_COUNT; i++)); do
+        if [[ "${_TUI_ITEMS_TAGS[$i]}" == "$preselected" ]]; then
+          _TUI_ITEMS_STATE[i]=1
+          break
+        fi
+      done
+    done <<< "$TUI_PRESELECT"
+  fi
+
+  _tui_engine
+}
+
+tui_checklist() {
+  _tui_checklist_common multi "$@"
+}
+
+tui_checklist_all() {
+  _tui_checklist_common multi_all "$@"
+}
