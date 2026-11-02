@@ -211,6 +211,21 @@ check_status 'checklist: 空列表报错' "$TUI_ERROR" "$?"
 tui_checklist '非法状态' '提示' a 'A' MAYBE
 check_status 'checklist: 非法状态报错' "$TUI_ERROR" "$?"
 
+_tui_view_reset
+_TUI_VIEW_MODE='pager'
+_TUI_CONTENT_LINES=('第一行' '第二行')
+_TUI_CONTENT_COUNT=2
+_tui_engine_handle_key pager ']'
+check_equal 'pager: 下翻页动作' 'page-down' "$_TUI_ACTION"
+_tui_engine_handle_key pager 'k'
+check_equal 'pager: 向上动作' 'move-up' "$_TUI_ACTION"
+
+tui_pager '分页' '提示' -- /no/such/file
+check_status 'pager: 文件不可读报错' "$TUI_ERROR" "$?"
+
+out=$(_tui_engine_status pager 0 0 1 0 0 2>&1)
+[[ "$out" == *'0/0'* ]] || { printf 'FAIL pager: 空内容状态不是 0/0\n' >&2; _failed=$((_failed + 1)); }
+
 tui_begin
 tui_begin
 check_equal 'core: 嵌套深度' '2' "$_TUI_DEPTH"

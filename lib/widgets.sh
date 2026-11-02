@@ -117,3 +117,40 @@ tui_checklist() {
 tui_checklist_all() {
   _tui_checklist_common multi_all "$@"
 }
+
+tui_pager() {
+  local title=$1 prompt=$2
+  shift 2
+  _tui_view_reset
+  _TUI_VIEW_MODE='pager'
+  _TUI_VIEW_TITLE=$title
+  _TUI_VIEW_SUBTITLE=$prompt
+
+  _parse_hotkeys "$@" || return "$TUI_ERROR"
+  if ((_TUI_REST_COUNT != 1)); then
+    _tui_error 'tui_pager 需要一个文件路径'
+    return "$TUI_ERROR"
+  fi
+  local file=${_TUI_REST[0]}
+  if [[ ! -f "$file" || ! -r "$file" ]]; then
+    _tui_error "读不到文件：$file"
+    return "$TUI_ERROR"
+  fi
+  mapfile -t _TUI_CONTENT_LINES < "$file"
+  _TUI_CONTENT_COUNT=${#_TUI_CONTENT_LINES[@]}
+  _tui_engine
+}
+
+tui_pager_lines() {
+  local title=$1 prompt=$2
+  shift 2
+  _tui_view_reset
+  _TUI_VIEW_MODE='pager'
+  _TUI_VIEW_TITLE=$title
+  _TUI_VIEW_SUBTITLE=$prompt
+
+  _parse_hotkeys "$@" || return "$TUI_ERROR"
+  _TUI_CONTENT_LINES=("${_TUI_REST[@]+"${_TUI_REST[@]}"}")
+  _TUI_CONTENT_COUNT=${#_TUI_CONTENT_LINES[@]}
+  _tui_engine
+}

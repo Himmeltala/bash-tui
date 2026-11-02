@@ -20,6 +20,8 @@ _tui_view_reset() {
   _TUI_ITEMS_STATE=()
   _TUI_ITEMS_COUNT=0
   _TUI_SELECTED=0
+  _TUI_CONTENT_LINES=()
+  _TUI_CONTENT_COUNT=0
   _TUI_HOTKEY_KEYS=()
   _TUI_HOTKEY_ACTIONS=()
   _TUI_HOTKEY_COUNT=0
@@ -317,4 +319,15 @@ _tui_engine() {
   done
   tui_end
   return "$rc"
+}
+
+_TUI_CONTENT_LINES=()
+_TUI_CONTENT_COUNT=0
+
+_tui_engine_render_lines() {
+  local offset=$1 listh=$2 total=$3 row
+  for ((row = offset; row < offset + listh && row < total; row++)); do
+    _tui_clip_to "${_TUI_CONTENT_LINES[$row]}" "$((_TUI_COLS - 2))"
+    printf ' %s%s\n' "$_TUI_TEXT" "$_TUI_CLEAR_LINE" >&2
+  done
 }
