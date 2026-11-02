@@ -155,6 +155,29 @@ check_equal 'items: 数量' '1' "$_TUI_ITEMS_COUNT"
 _tui_validate_label '@hotkey:kill'
 check_status 'items: 保留前缀被拒' "$TUI_ERROR" "$?"
 
+_tui_hotkey_add 'u' 'udp'
+_tui_hotkey_add 'LEFT' 'back'
+_tui_hotkey_match 'U'
+check_status 'hotkey: 单字符大小写不敏感' '0' "$?"
+check_equal 'hotkey: 命中动作' 'udp' "$_TUI_HOTKEY_ACTION"
+_tui_hotkey_match 'u'
+check_status 'hotkey: 小写命中' '0' "$?"
+_tui_hotkey_match 'x'
+check_status 'hotkey: 未命中' '1' "$?"
+_tui_hotkey_match 'LEFT'
+check_equal 'hotkey: 命名键精确匹配' 'back' "$_TUI_HOTKEY_ACTION"
+
+_tui_engine_handle_key browse 'k'
+check_equal 'key: 向上' 'move-up' "$_TUI_ACTION"
+_tui_engine_handle_key menu 'ENTER'
+check_equal 'key: 回车选择' 'select' "$_TUI_ACTION"
+_tui_engine_handle_key multi 'SPACE'
+check_equal 'key: 空格勾选' 'toggle' "$_TUI_ACTION"
+_tui_engine_handle_key pager 'SPACE'
+check_equal 'key: 分页空格翻页' 'page-down' "$_TUI_ACTION"
+_tui_engine_handle_key pager 'q'
+check_equal 'key: q 取消' 'cancel' "$_TUI_ACTION"
+
 tui_begin
 tui_begin
 check_equal 'core: 嵌套深度' '2' "$_TUI_DEPTH"
