@@ -63,10 +63,27 @@ _TUI_COLS=40
 out=$(tui_hint '↑↓' '移动' '回车' '选择' 'u' 'UDP' 'r' '刷新' 'q' '返回' 2>&1 >/dev/null)
 check_status 'hint: 截断不报错' '0' "$?"
 [[ "$out" == *'…'* ]] || { printf 'FAIL hint: 超宽时没有省略号\n' >&2; _failed=$((_failed + 1)); }
+# 第二组恰好落在 cols-1 内、超出 cols-2；上限留两列给省略号后应截断。
+_TUI_COLS=20
+out=$(tui_hint 'a' '1234' 'b' '1234567' 2>&1 >/dev/null)
+[[ "$out" == *'…'* ]] || { printf 'FAIL hint: 没有给省略号留出两列\n' >&2; _failed=$((_failed + 1)); }
 _TUI_COLS=$old_cols
 
 check_equal 'engine: 无副标题占 5 行' '5' "$(_tui_chrome_height '')"
 check_equal 'engine: 有副标题占 6 行' '6' "$(_tui_chrome_height '提示')"
+
+_TUI_VIEW_SUBTITLE=''
+_TUI_LINES=24
+TUI_PAGE_SIZE=15
+check_equal 'page: 列表可见行数上限' '15' "$(_tui_engine_list_height menu 100)"
+check_equal 'page: 短列表不多补行' '3' "$(_tui_engine_list_height menu 3)"
+TUI_PAGE_SIZE=0
+check_equal 'page: 零表示不限' '19' "$(_tui_engine_list_height menu 100)"
+TUI_PAGE_SIZE='abc'
+check_equal 'page: 非正整数不限' '19' "$(_tui_engine_list_height menu 100)"
+TUI_PAGE_SIZE=15
+check_equal 'page: 分页视图不受限' '19' "$(_tui_engine_list_height pager 100)"
+TUI_PAGE_SIZE=''
 
 _tui_decode_key $'\033' '[' 'A'
 check_equal 'key: 上方向键' 'UP' "$_TUI_KEY"
@@ -88,6 +105,10 @@ _tui_decode_key $'\033' '[' 'H'
 check_equal 'key: 未知 CSI 忽略' 'IGNORE' "$_TUI_KEY"
 _tui_decode_key $'\033' '[' ''
 check_equal 'key: 截断 CSI 忽略' 'IGNORE' "$_TUI_KEY"
+_tui_decode_key $'\177'
+check_equal 'key: 退格' 'BACKSPACE' "$_TUI_KEY"
+_tui_decode_key $'\b'
+check_equal 'key: Ctrl+H 退格' 'BACKSPACE' "$_TUI_KEY"
 
 _tui_clamp_window 0 0 5 20
 check_equal 'scroll: 上边界' '0 0' "$_TUI_CURSOR $_TUI_OFFSET"
@@ -140,6 +161,8 @@ printf '\n' | plain_checklist_all '提示' a 'A' OFF >/dev/null 2>&1
 check_status 'fallback: 全选空输入返回 EMPTY' "$TUI_EMPTY" "$?"
 printf '' | plain_checklist_all '提示' a 'A' OFF >/dev/null 2>&1
 check_status 'fallback: 全选 EOF 返回 CANCEL' "$TUI_CANCEL" "$?"
+printf '0\n' | plain_checklist_all '提示' >/dev/null 2>&1
+check_status 'fallback: 全选零条目返回 ERROR' "$TUI_ERROR" "$?"
 printf '' | plain_menu '提示' a 'A' >/dev/null 2>&1
 check_status 'fallback: 菜单 EOF 返回 CANCEL' "$TUI_CANCEL" "$?"
 UI_MODE=0
@@ -151,6 +174,8 @@ tmp=$(mktemp)
 printf 'a\nb\n' > "$tmp"
 check_equal 'fallback: 分页输出' $'a\nb' "$(ui_pager '标题' '提示' -- "$tmp" 2>/dev/null)"
 rm -f "$tmp"
+ui_pager '标题' '提示' -- /no/such/file >/dev/null 2>&1
+check_status 'fallback: 分页文件不可读返回 ERROR' "$TUI_ERROR" "$?"
 
 UI_MODE=0
 _out=$(printf '1\n' | ui_menu '标题' '提示' a A b B)
@@ -211,6 +236,42 @@ _tui_engine_handle_key pager 'q'
 check_equal 'key: q 取消' 'cancel' "$_TUI_ACTION"
 
 _tui_view_reset
+_tui_engine_handle_key menu 'b'
+check_equal 'key: b 返回' 'back' "$_TUI_ACTION"
+_tui_engine_handle_key menu 'B'
+check_equal 'key: B 返回' 'back' "$_TUI_ACTION"
+_tui_engine_handle_key menu 'BACKSPACE'
+check_equal 'key: 退格返回' 'back' "$_TUI_ACTION"
+_tui_engine_handle_key menu 'ESC'
+check_equal 'key: 列表 ESC 返回' 'back' "$_TUI_ACTION"
+_tui_engine_handle_key menu 'LEFT'
+check_equal 'key: 列表左方向返回' 'back' "$_TUI_ACTION"
+_tui_engine_handle_key menu 'q'
+check_equal 'key: 列表 q 取消' 'cancel' "$_TUI_ACTION"
+_tui_engine_handle_key pager 'ESC'
+check_equal 'key: 分页 ESC 关闭' 'cancel' "$_TUI_ACTION"
+_tui_engine_handle_key pager 'LEFT'
+check_equal 'key: 分页左方向关闭' 'cancel' "$_TUI_ACTION"
+_tui_engine_handle_key pager 'ENTER'
+check_equal 'key: 分页回车关闭' 'cancel' "$_TUI_ACTION"
+_tui_engine_handle_key pager 'b'
+check_equal 'key: 分页 b 无动作' '' "$_TUI_ACTION"
+
+# 热键在默认键之前匹配：绑定 q、回车、左方向后动作必须胜出。
+_tui_view_reset
+_tui_hotkey_add 'q' 'quit'
+_tui_engine_handle_key menu 'q'
+check_equal 'hotkey: q 优先于取消' 'hotkey' "$_TUI_ACTION"
+check_equal 'hotkey: q 动作为绑定值' 'quit' "$_TUI_ACTION_ARG"
+_tui_hotkey_add 'ENTER' 'enter-action'
+_tui_engine_handle_key menu 'ENTER'
+check_equal 'hotkey: 回车优先于选择' 'enter-action' "$_TUI_ACTION_ARG"
+_tui_hotkey_add 'LEFT' 'left-action'
+_tui_engine_handle_key menu 'LEFT'
+check_equal 'hotkey: 左方向优先于返回' 'left-action' "$_TUI_ACTION_ARG"
+_tui_view_reset
+
+_tui_view_reset
 _TUI_VIEW_MODE='menu'
 _tui_item_add 'a' '选项 A' ''
 _tui_item_add 'b' '选项 B' ''
@@ -225,6 +286,24 @@ check_status 'browse: 空列表报错' "$TUI_ERROR" "$?"
 
 printf 'q' | tui_menu 't' 'p' a 'A' >/dev/null 2>&1
 check_status 'menu: 非空取消' "$TUI_CANCEL" "$?"
+printf 'b' | tui_menu 't' 'p' a 'A' >/dev/null 2>&1
+check_status 'menu: b 返回 BACK' "$TUI_BACK" "$?"
+printf '\177' | tui_menu 't' 'p' a 'A' >/dev/null 2>&1
+check_status 'menu: 退格返回 BACK' "$TUI_BACK" "$?"
+printf '\033' | tui_menu 't' 'p' a 'A' >/dev/null 2>&1
+check_status 'menu: ESC 返回 BACK' "$TUI_BACK" "$?"
+printf '\033[D' | tui_menu 't' 'p' a 'A' >/dev/null 2>&1
+check_status 'menu: 左方向返回 BACK' "$TUI_BACK" "$?"
+
+# 包装层必须把 TUI_BACK 原样透传，mvnx/gradlex 靠 4 回到上一级菜单。
+UI_MODE=1
+printf 'b' | ui_menu '标题' '提示' a 'A' >/dev/null 2>&1
+check_status 'ui: 菜单返回 BACK 透传' "$TUI_BACK" "$?"
+printf 'b' | ui_checklist '标题' '提示' a 'A' OFF >/dev/null 2>&1
+check_status 'ui: 勾选返回 BACK 透传' "$TUI_BACK" "$?"
+printf 'b' | ui_browse '标题' '提示' -- a '主' '说明' >/dev/null 2>&1
+check_status 'ui: 浏览返回 BACK 透传' "$TUI_BACK" "$?"
+UI_MODE=0
 
 _tui_view_reset
 _TUI_VIEW_MODE='multi'
@@ -244,6 +323,23 @@ tui_checklist '非法状态' '提示' a 'A' MAYBE
 check_status 'checklist: 非法状态报错' "$TUI_ERROR" "$?"
 
 _tui_view_reset
+_TUI_VIEW_MODE='multi_all'
+_tui_item_add 'a' 'A' 0
+_tui_item_add 'b' 'B' 0
+_tui_engine_toggle multi_all 0
+_tui_selected_count
+check_equal 'multi_all: 全部勾选' '2' "$_TUI_SELECTED"
+_tui_engine_toggle multi_all 0
+_tui_selected_count
+check_equal 'multi_all: 全部取消' '0' "$_TUI_SELECTED"
+_tui_engine_toggle multi_all 1
+_tui_selected_count
+check_equal 'multi_all: 单项勾选' '1' "$_TUI_SELECTED"
+_tui_engine_toggle multi_all 0
+_tui_selected_count
+check_equal 'multi_all: 部分选中后全选' '2' "$_TUI_SELECTED"
+
+_tui_view_reset
 _TUI_VIEW_MODE='pager'
 _TUI_CONTENT_LINES=('第一行' '第二行')
 _TUI_CONTENT_COUNT=2
@@ -254,6 +350,18 @@ check_equal 'pager: 向上动作' 'move-up' "$_TUI_ACTION"
 
 tui_pager '分页' '提示' -- /no/such/file
 check_status 'pager: 文件不可读报错' "$TUI_ERROR" "$?"
+
+_pager_tmp=$(mktemp)
+printf 'a\nb\n' > "$_pager_tmp"
+printf '\n' | tui_pager '分页' '提示' -- "$_pager_tmp" >/dev/null 2>&1
+check_status 'pager: 回车关闭返回 OK' "$TUI_OK" "$?"
+printf '\033' | tui_pager '分页' '提示' -- "$_pager_tmp" >/dev/null 2>&1
+check_status 'pager: ESC 关闭返回 OK' "$TUI_OK" "$?"
+printf '\033[D' | tui_pager '分页' '提示' -- "$_pager_tmp" >/dev/null 2>&1
+check_status 'pager: 左方向关闭返回 OK' "$TUI_OK" "$?"
+printf 'q' | tui_pager '分页' '提示' -- "$_pager_tmp" >/dev/null 2>&1
+check_status 'pager: q 关闭返回 OK' "$TUI_OK" "$?"
+rm -f "$_pager_tmp"
 
 out=$(_tui_engine_status pager 0 0 1 0 0 2>&1)
 [[ "$out" == *'0/0'* ]] || { printf 'FAIL pager: 空内容状态不是 0/0\n' >&2; _failed=$((_failed + 1)); }

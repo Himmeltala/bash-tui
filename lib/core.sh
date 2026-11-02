@@ -11,8 +11,8 @@ readonly TUI_BACK=4
 : "${TUI_LABEL_ALL_DESC:=选中全部模块}"
 : "${TUI_MIN_COLS:=40}"
 : "${TUI_ESC_TIMEOUT:=0.05}"
+: "${TUI_PAGE_SIZE:=}"
 
-readonly _TUI_CHROME_LINES=8
 readonly _TUI_DEFAULT_LINES=24
 readonly _TUI_DEFAULT_COLS=100
 readonly _TUI_ENTER_SCREEN=$'\033[?1049h\033[?25l'

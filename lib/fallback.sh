@@ -106,6 +106,11 @@ plain_checklist_all() {
     shift 3
   done
 
+  if ((${#tags[@]} == 0)); then
+    _tui_error '全部勾选需要成对的标签、文本与状态'
+    return "$TUI_ERROR"
+  fi
+
   printf '%s\n\n' "$prompt" >&2
   printf '   0) 全部\n' >&2
   local i

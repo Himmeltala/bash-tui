@@ -81,7 +81,8 @@ ui_pager() {
       _tui_error 'ui_pager 需要一个文件路径'
       return "$TUI_ERROR"
     fi
-    cat "${_TUI_REST[0]}"
+    cat "${_TUI_REST[0]}" || return "$TUI_ERROR"
+    return "$TUI_OK"
   fi
 }
 

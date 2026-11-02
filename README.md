@@ -43,7 +43,9 @@ tui_wait_key '提示'
 
 ## 按键
 
-↑↓ 或 k/j 移动，空格勾选（分页中翻页），回车确认，← 或 q 返回，`[` `]` 翻页。
+列表视图（菜单、勾选、浏览）：↑↓ 或 k/j 移动，回车确认，`[` `]` 翻页；勾选视图空格勾选；`←`、`ESC`、`b`、`B` 与退格返回上一步，`q` 取消。
+
+分页视图：↑↓ 或 k/j 滚动，空格或 `[` `]` 翻页；回车、`q`、`ESC`、`←` 正常关闭。
 
 ## 热键
 
@@ -58,6 +60,8 @@ tui_wait_key '提示'
 | `TUI_EMPTY` | 2 | 没有选中项 |
 | `TUI_ERROR` | 3 | 参数或文件错误 |
 | `TUI_BACK` | 4 | 返回上一步 |
+
+列表视图里 `←`、`ESC`、`b`、`B` 与退格返回 `TUI_BACK`，`q` 返回 `TUI_CANCEL`。分页视图里 `q`、`ESC`、`←` 与回车都正常关闭并返回 `TUI_OK`。
 
 `tui_confirm` 以 0/1 表示确认与取消。
 
@@ -75,11 +79,15 @@ tui_wait_key '提示'
 | `TUI_LABEL_ALL_DESC` | `选中全部模块` | 全选行说明 |
 | `TUI_MIN_COLS` | `40` | 最小宽度 |
 | `TUI_ESC_TIMEOUT` | `0.05` | 转义序列超时 |
+| `TUI_PAGE_SIZE` | 空 | 列表视图可见行数上限；空、`0` 或非正整数表示按终端高度铺满 |
 
 ## 验证
 
 ```bash
 bash -n bash-tui.sh lib/*.sh
 bash test/run.sh
+bash test/pty.sh
 bash demo.sh
 ```
+
+`test/pty.sh` 依赖 util-linux 的 `script`；没有时打印跳过提示并以 0 退出。

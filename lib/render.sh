@@ -110,7 +110,7 @@ tui_subtitle() {
 
 tui_hint() {
   local line=' ' part='' first=1 sep=0 visible=1
-  local limit=$((_TUI_COLS - 1)) ellipsis='…' w
+  local limit=$((_TUI_COLS - 2)) ellipsis='…' w
 
   while (($# >= 2)); do
     _tui_measure "$1 $2"

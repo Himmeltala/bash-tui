@@ -14,6 +14,8 @@ _tui_decode_key() {
     else
       _TUI_KEY=ESC
     fi
+  elif [[ "$first" == $'\177' || "$first" == $'\b' ]]; then
+    _TUI_KEY=BACKSPACE
   elif [[ -z "$first" ]]; then
     _TUI_KEY=ENTER
   elif [[ "$first" == ' ' ]]; then

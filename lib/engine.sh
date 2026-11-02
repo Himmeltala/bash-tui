@@ -103,6 +103,19 @@ _tui_chrome_height() {
   printf '%s\n' "$h"
 }
 
+# 列表视图可见行数：按终端高度铺满，再用 TUI_PAGE_SIZE 压低上限；分页视图不受它限制。
+_tui_engine_list_height() {
+  local mode=$1 total=$2 listh
+  listh=$((_TUI_LINES - $(_tui_chrome_height "$_TUI_VIEW_SUBTITLE")))
+  ((listh < 1)) && listh=1
+  if [[ "$mode" != 'pager' && ${TUI_PAGE_SIZE:-} =~ ^[0-9]+$ ]] &&
+     (( ${TUI_PAGE_SIZE:-0} > 0 && listh > ${TUI_PAGE_SIZE:-0} )); then
+    listh=${TUI_PAGE_SIZE}
+  fi
+  ((listh > total)) && listh=$total
+  printf '%s\n' "$listh"
+}
+
 # 热键与按键分派：按键到动作的纯计算，不涉及渲染与读取。
 _TUI_HOTKEY_KEYS=()
 _TUI_HOTKEY_ACTIONS=()
@@ -155,10 +168,21 @@ _tui_engine_handle_key() {
     DOWN | j | J) _TUI_ACTION='move-down' ;;
     '[') _TUI_ACTION='page-up' ;;
     ']') _TUI_ACTION='page-down' ;;
-    q | Q | ESC | LEFT) _TUI_ACTION='cancel' ;;
+    q | Q) _TUI_ACTION='cancel' ;;
+    ESC | LEFT)
+      if [[ "$mode" == 'pager' ]]; then
+        _TUI_ACTION='cancel'
+      else
+        _TUI_ACTION='back'
+      fi
+      ;;
+    b | B | BACKSPACE)
+      [[ "$mode" == 'pager' ]] || _TUI_ACTION='back'
+      ;;
     ENTER)
       case "$mode" in
         menu | browse | multi | multi_all) _TUI_ACTION='select' ;;
+        pager) _TUI_ACTION='cancel' ;;
       esac
       ;;
     SPACE)
@@ -250,9 +274,7 @@ _tui_engine() {
   tui_begin
   while :; do
     tui_size
-    listh=$((_TUI_LINES - $(_tui_chrome_height "$_TUI_VIEW_SUBTITLE")))
-    ((listh < 1)) && listh=1
-    ((listh > total)) && listh=$total
+    listh=$(_tui_engine_list_height "$mode" "$total")
     _tui_clamp_window "$cursor" "$offset" "$listh" "$total"
     cursor=$_TUI_CURSOR
     offset=$_TUI_OFFSET
@@ -292,6 +314,10 @@ _tui_engine() {
         else
           rc=$TUI_CANCEL
         fi
+        break
+        ;;
+      back)
+        rc=$TUI_BACK
         break
         ;;
       move-up) ((cursor > 0)) && cursor=$((cursor - 1)) ;;
