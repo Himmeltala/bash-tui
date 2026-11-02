@@ -1,4 +1,4 @@
-# 单行输入与是否确认；输入内容或确认结果只走 stdout。
+# 单行输入、确认与原地等待按键；结果只走 stdout。
 
 tui_input() {
   if (($# < 2)); then
@@ -54,17 +54,12 @@ tui_confirm() {
 
 tui_wait_key() {
   local prompt=${1:-}
-  tui_begin
-  tui_size
-  tui_frame_begin
-  tui_clear
-  tui_subtitle "$prompt"
-  tui_hint '任意键' '继续'
-  tui_rule
-  tui_frame_end
-  _tui_read_key || { tui_end; return "$TUI_CANCEL"; }
-  local key=$_TUI_KEY
-  tui_end
-  printf '%s\n' "$key"
+  printf '%s ' "$prompt" >&2
+  if ! _tui_read_key; then
+    printf '\n' >&2
+    return "$TUI_CANCEL"
+  fi
+  printf '\n' >&2
+  printf '%s\n' "$_TUI_KEY"
   return "$TUI_OK"
 }

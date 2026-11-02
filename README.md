@@ -24,7 +24,7 @@ source /path/to/bash-tui/bash-tui.sh
 | `tui_pager_lines` | 分页查看行数组，支持热键 |
 | `tui_input` | 单行输入 |
 | `tui_confirm` | 是否确认 |
-| `tui_wait_key` | 等待一个按键 |
+| `tui_wait_key` | 原地等待一个按键，不切换界面 |
 | `ui_*` | 对应的无终端回退包装 |
 
 ```bash

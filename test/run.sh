@@ -170,6 +170,14 @@ printf '' | ui_wait_key '继续' >/dev/null 2>&1
 check_status 'fallback: 等待按键 EOF 返回 CANCEL' "$TUI_CANCEL" "$?"
 check_equal 'fallback: 等待按键' 'q' "$(printf 'q\n' | ui_wait_key '继续' 2>/dev/null)"
 
+_old_ui=$UI_MODE
+UI_MODE=1
+_wait_err=$(printf 'x' | tui_wait_key '继续' 2>&1 >/dev/null)
+check_equal 'wait_key: 返回按键' 'x' "$(printf 'x' | tui_wait_key '继续' 2>/dev/null)"
+[[ "$_wait_err" == *'继续'* ]] || { printf 'FAIL wait_key: 没有输出提示\n' >&2; _failed=$((_failed + 1)); }
+[[ "$_wait_err" != *$'\033[?1049h'* ]] || { printf 'FAIL wait_key: 不应进入备用屏幕\n' >&2; _failed=$((_failed + 1)); }
+UI_MODE=$_old_ui
+
 tmp=$(mktemp)
 printf 'a\nb\n' > "$tmp"
 check_equal 'fallback: 分页输出' $'a\nb' "$(ui_pager '标题' '提示' -- "$tmp" 2>/dev/null)"
