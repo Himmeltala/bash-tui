@@ -2,12 +2,18 @@
 
 _parse_hotkeys() {
   local -a rest=()
+  local key action label
   while (($#)); do
     case "$1" in
       --hotkey)
         (($# >= 3)) || { _tui_error '--hotkey 需要键与动作'; return "$TUI_ERROR"; }
-        _tui_hotkey_add "$2" "$3" || return "$TUI_ERROR"
+        key=$2 action=$3 label=$3
         shift 3
+        if (($#)) && [[ "$1" != '--hotkey' && "$1" != '--' ]]; then
+          label=$1
+          shift
+        fi
+        _tui_hotkey_add "$key" "$action" "$label" || return "$TUI_ERROR"
         ;;
       --)
         shift

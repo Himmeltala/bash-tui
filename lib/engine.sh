@@ -24,6 +24,7 @@ _tui_view_reset() {
   _TUI_CONTENT_COUNT=0
   _TUI_HOTKEY_KEYS=()
   _TUI_HOTKEY_ACTIONS=()
+  _TUI_HOTKEY_LABELS=()
   _TUI_HOTKEY_COUNT=0
   _TUI_HOTKEY_ACTION=''
   _TUI_ACTION=''
@@ -105,16 +106,18 @@ _tui_chrome_height() {
 # 热键与按键分派：按键到动作的纯计算，不涉及渲染与读取。
 _TUI_HOTKEY_KEYS=()
 _TUI_HOTKEY_ACTIONS=()
+_TUI_HOTKEY_LABELS=()
 _TUI_HOTKEY_COUNT=0
 _TUI_HOTKEY_ACTION=''
 _TUI_ACTION=''
 _TUI_ACTION_ARG=''
 
 _tui_hotkey_add() {
-  local key=$1 action=$2
+  local key=$1 action=$2 label=${3:-$2}
   _tui_validate_label "$action" || return "$TUI_ERROR"
   _TUI_HOTKEY_KEYS+=("$key")
   _TUI_HOTKEY_ACTIONS+=("$action")
+  _TUI_HOTKEY_LABELS+=("$label")
   _TUI_HOTKEY_COUNT=$((_TUI_HOTKEY_COUNT + 1))
   return 0
 }
@@ -206,7 +209,7 @@ _tui_engine_hint() {
   esac
 
   for ((i = 0; i < _TUI_HOTKEY_COUNT; i++)); do
-    pairs+=( "${_TUI_HOTKEY_KEYS[$i]}" "${_TUI_HOTKEY_ACTIONS[$i]}" )
+    pairs+=( "${_TUI_HOTKEY_KEYS[$i]}" "${_TUI_HOTKEY_LABELS[$i]}" )
   done
   pairs+=( 'q' '返回' )
   tui_hint "${pairs[@]}"

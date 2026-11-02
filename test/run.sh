@@ -194,6 +194,10 @@ _tui_hotkey_match 'x'
 check_status 'hotkey: 未命中' '1' "$?"
 _tui_hotkey_match 'LEFT'
 check_equal 'hotkey: 命名键精确匹配' 'back' "$_TUI_HOTKEY_ACTION"
+_tui_hotkey_add 'u' 'udp' 'UDP'
+check_equal 'hotkey: 显示标签' 'UDP' "${_TUI_HOTKEY_LABELS[$((_TUI_HOTKEY_COUNT - 1))]}"
+_tui_hotkey_add 'x' 'extra'
+check_equal 'hotkey: 标签默认动作' 'extra' "${_TUI_HOTKEY_LABELS[$((_TUI_HOTKEY_COUNT - 1))]}"
 
 _tui_engine_handle_key browse 'k'
 check_equal 'key: 向上' 'move-up' "$_TUI_ACTION"
