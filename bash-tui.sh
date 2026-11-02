@@ -23,7 +23,7 @@ fi
 _bash_tui_dir=${BASH_SOURCE[0]%/*}
 [[ "$_bash_tui_dir" == "${BASH_SOURCE[0]}" ]] && _bash_tui_dir='.'
 
-for _bash_tui_module in core render key scroll engine widgets select dialog view fallback ui; do
+for _bash_tui_module in core render key scroll engine widgets dialog fallback ui; do
   # shellcheck source=/dev/null
   if ! source "$_bash_tui_dir/lib/$_bash_tui_module.sh"; then
     printf 'bash-tui: 加载模块 %s 失败\n' "$_bash_tui_module" >&2

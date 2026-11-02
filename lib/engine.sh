@@ -97,8 +97,8 @@ _tui_emit_selected() {
 
 _tui_chrome_height() {
   local subtitle=${1:-}
-  local h=8
-  [[ -n "$subtitle" ]] && h=$((h + 1))
+  local h=5
+  [[ -n "$subtitle" ]] && h=6
   printf '%s\n' "$h"
 }
 

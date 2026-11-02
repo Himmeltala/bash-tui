@@ -58,6 +58,16 @@ check_equal 'render: 不截断宽度' '6' "$_TUI_WIDTH"
 _tui_clip_to 'abc' 0
 check_equal 'render: 宽度为零截断' '' "$_TUI_TEXT"
 
+old_cols=$_TUI_COLS
+_TUI_COLS=40
+out=$(tui_hint '↑↓' '移动' '回车' '选择' 'u' 'UDP' 'r' '刷新' 'q' '返回' 2>&1 >/dev/null)
+check_status 'hint: 截断不报错' '0' "$?"
+[[ "$out" == *'…'* ]] || { printf 'FAIL hint: 超宽时没有省略号\n' >&2; _failed=$((_failed + 1)); }
+_TUI_COLS=$old_cols
+
+check_equal 'engine: 无副标题占 5 行' '5' "$(_tui_chrome_height '')"
+check_equal 'engine: 有副标题占 6 行' '6' "$(_tui_chrome_height '提示')"
+
 _tui_decode_key $'\033' '[' 'A'
 check_equal 'key: 上方向键' 'UP' "$_TUI_KEY"
 _tui_decode_key $'\033' '[' 'B'
@@ -98,21 +108,6 @@ _TUI_PAGE_ALIGN=1
 _tui_clamp_window 0 15 15 80
 check_equal 'scroll: 上翻一页对齐' '0 0' "$_TUI_CURSOR $_TUI_OFFSET"
 _TUI_PAGE_ALIGN=0
-
-tui_select wrong '标题' '提示' a A >/dev/null 2>&1
-check_status 'select: 未知模式' "$TUI_ERROR" "$?"
-
-tui_select menu '标题' '提示' a >/dev/null 2>&1
-check_status 'select: 参数不成对' "$TUI_ERROR" "$?"
-
-tui_select menu '标题' '提示' >/dev/null 2>&1
-check_status 'select: 空列表' "$TUI_ERROR" "$?"
-
-tui_textbox '标题' /nonexistent/file >/dev/null 2>&1
-check_status 'view: 文件不可读' "$TUI_ERROR" "$?"
-
-tui_textbox '标题' /tmp >/dev/null 2>&1 </dev/null
-check_status 'view: 目录不是文件' "$TUI_ERROR" "$?"
 
 tui_confirm '' >/dev/null 2>&1
 check_status 'dialog: 缺少提示' "$TUI_ERROR" "$?"

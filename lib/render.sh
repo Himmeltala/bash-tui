@@ -109,12 +109,22 @@ tui_subtitle() {
 }
 
 tui_hint() {
-  local first=1 line=' ' part=''
+  local line=' ' part='' first=1 sep=0 visible=1
+  local limit=$((_TUI_COLS - 1)) ellipsis='…' w
+
   while (($# >= 2)); do
+    _tui_measure "$1 $2"
+    w=$_TUI_WIDTH
+    if ((visible + sep + w > limit)); then
+      line+=$ellipsis
+      break
+    fi
     ((first)) || line+='   '
     printf -v part '%s%s%s %s%s%s' \
       "$_TUI_C_ACCENT" "$1" "$_TUI_C_RESET" "$_TUI_C_DIM" "$2" "$_TUI_C_RESET"
     line+=$part
+    visible=$((visible + sep + w))
+    sep=3
     first=0
     shift 2
   done
