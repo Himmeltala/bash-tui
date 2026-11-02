@@ -145,5 +145,22 @@ check_equal 'ui: 输入回退' '2' "$_out"
 _out=$(printf 'y\n' | ui_yesno '标题' '提示'; printf '%s' "$?")
 check_equal 'ui: 确认回退' '0' "$_out"
 
+_tui_view_reset
+_tui_item_add 'p:TCP:8080' $'8080/TCP\t0.0.0.0:8080 java' ''
+check_equal 'items: 标签' 'p:TCP:8080' "${_TUI_ITEMS_TAGS[0]}"
+check_equal 'items: 主文本' '8080/TCP' "${_TUI_ITEMS_PRIMARY[0]}"
+check_equal 'items: 说明文本' '0.0.0.0:8080 java' "${_TUI_ITEMS_SECONDARY[0]}"
+check_equal 'items: 数量' '1' "$_TUI_ITEMS_COUNT"
+
+_tui_validate_label '@hotkey:kill'
+check_status 'items: 保留前缀被拒' "$TUI_ERROR" "$?"
+
+tui_begin
+tui_begin
+check_equal 'core: 嵌套深度' '2' "$_TUI_DEPTH"
+tui_end
+tui_end
+check_equal 'core: 退出嵌套' '0' "$_TUI_DEPTH"
+
 printf '\n通过 %d，失败 %d\n' "$_passed" "$_failed"
 ((_failed == 0))
