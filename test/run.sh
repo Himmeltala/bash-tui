@@ -135,6 +135,28 @@ check_status 'fallback: 复选空输入' "$TUI_EMPTY" "$?"
 printf '9\n' | plain_checklist '选择' a A OFF >/dev/null 2>&1
 check_status 'fallback: 复选全部非法' "$TUI_EMPTY" "$?"
 
+check_equal 'fallback: 菜单返回标签' 'a' "$(printf '1\n' | plain_menu '选一个' a '选项 A' b '选项 B' 2>/dev/null)"
+check_equal 'fallback: 浏览返回标签' 'p:1' "$(printf '1\n' | plain_browse '选端口' p:1 'TCP' '127.0.0.1:1' 2>/dev/null)"
+check_equal 'fallback: 全选输出两行' $'a\nb' "$(printf '0\n' | plain_checklist_all '全选' a 'A' ON b 'B' OFF 2>/dev/null)"
+check_equal 'fallback: 制表符转两行' $'主\n      次' "$(_plain_desc $'主\t次')"
+printf '\n' | plain_checklist '提示' a 'A' OFF >/dev/null 2>&1
+check_status 'fallback: 空勾选返回 EMPTY' "$TUI_EMPTY" "$?"
+printf '\n' | plain_checklist_all '提示' a 'A' OFF >/dev/null 2>&1
+check_status 'fallback: 全选空输入返回 EMPTY' "$TUI_EMPTY" "$?"
+printf '' | plain_checklist_all '提示' a 'A' OFF >/dev/null 2>&1
+check_status 'fallback: 全选 EOF 返回 CANCEL' "$TUI_CANCEL" "$?"
+printf '' | plain_menu '提示' a 'A' >/dev/null 2>&1
+check_status 'fallback: 菜单 EOF 返回 CANCEL' "$TUI_CANCEL" "$?"
+UI_MODE=0
+printf '' | ui_wait_key '继续' >/dev/null 2>&1
+check_status 'fallback: 等待按键 EOF 返回 CANCEL' "$TUI_CANCEL" "$?"
+check_equal 'fallback: 等待按键' 'q' "$(printf 'q\n' | ui_wait_key '继续' 2>/dev/null)"
+
+tmp=$(mktemp)
+printf 'a\nb\n' > "$tmp"
+check_equal 'fallback: 分页输出' $'a\nb' "$(ui_pager '标题' '提示' -- "$tmp" 2>/dev/null)"
+rm -f "$tmp"
+
 UI_MODE=0
 _out=$(printf '1\n' | ui_menu '标题' '提示' a A b B)
 check_equal 'ui: 单选回退' 'a' "$_out"

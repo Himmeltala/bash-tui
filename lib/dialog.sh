@@ -51,3 +51,20 @@ tui_confirm() {
   [[ "$key" == y || "$key" == Y ]]
   return $?
 }
+
+tui_wait_key() {
+  local prompt=${1:-}
+  tui_begin
+  tui_size
+  tui_frame_begin
+  tui_clear
+  tui_subtitle "$prompt"
+  tui_hint '任意键' '继续'
+  tui_rule
+  tui_frame_end
+  _tui_read_key || { tui_end; return "$TUI_CANCEL"; }
+  local key=$_TUI_KEY
+  tui_end
+  printf '%s\n' "$key"
+  return "$TUI_OK"
+}

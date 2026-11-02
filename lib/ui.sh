@@ -6,55 +6,41 @@ ui_menu() {
   local title=$1 prompt=$2
   shift 2
   if ui_available; then
-    tui_select menu "$title" "$prompt" "$@"
+    tui_menu "$title" "$prompt" "$@"
   else
     plain_menu "$prompt" "$@"
   fi
-  return $?
 }
 
 ui_checklist() {
   local title=$1 prompt=$2
   shift 2
-  if ! ui_available; then
+  if ui_available; then
+    tui_checklist "$title" "$prompt" "$@"
+  else
     plain_checklist "$prompt" "$@"
-    return $?
   fi
-
-  local -a items=()
-  local -a selected=()
-  while (($# >= 3)); do
-    items+=("$1" "$2")
-    [[ "$3" == ON ]] && selected+=("$1")
-    shift 3
-  done
-
-  local TUI_PRESELECT=${TUI_PRESELECT:-}
-  ((${#selected[@]})) && TUI_PRESELECT=$(printf '%s\n' "${selected[@]}")
-  tui_select checklist "$title" "$prompt" "${items[@]}"
-  return $?
 }
 
 ui_checklist_all() {
   local title=$1 prompt=$2
   shift 2
-  if ! ui_available; then
-    plain_checklist "$prompt" "$@"
-    return $?
+  if ui_available; then
+    tui_checklist_all "$title" "$prompt" "$@"
+  else
+    plain_checklist_all "$prompt" "$@"
   fi
+}
 
-  local -a items=()
-  local -a selected=()
-  while (($# >= 3)); do
-    items+=("$1" "$2")
-    [[ "$3" == ON ]] && selected+=("$1")
-    shift 3
-  done
-
-  local TUI_PRESELECT=${TUI_PRESELECT:-}
-  ((${#selected[@]})) && TUI_PRESELECT=$(printf '%s\n' "${selected[@]}")
-  tui_select all "$title" "$prompt" "${items[@]}"
-  return $?
+ui_browse() {
+  local title=$1 prompt=$2
+  shift 2
+  if ui_available; then
+    tui_browse "$title" "$prompt" "$@"
+  else
+    _parse_hotkeys "$@" || return "$TUI_ERROR"
+    plain_browse "$prompt" "${_TUI_REST[@]+"${_TUI_REST[@]}"}"
+  fi
 }
 
 ui_input() {
@@ -84,12 +70,41 @@ ui_yesno() {
   return $?
 }
 
-ui_textbox() {
-  local title=$1 file=$2
+ui_pager() {
+  local title=$1 prompt=$2
+  shift 2
   if ui_available; then
-    tui_textbox "$title" "$file"
+    tui_pager "$title" "$prompt" "$@"
+  else
+    _parse_hotkeys "$@" || return "$TUI_ERROR"
+    if ((_TUI_REST_COUNT != 1)); then
+      _tui_error 'ui_pager 需要一个文件路径'
+      return "$TUI_ERROR"
+    fi
+    cat "${_TUI_REST[0]}"
+  fi
+}
+
+ui_pager_lines() {
+  local title=$1 prompt=$2
+  shift 2
+  if ui_available; then
+    tui_pager_lines "$title" "$prompt" "$@"
+  else
+    _parse_hotkeys "$@" || return "$TUI_ERROR"
+    ((_TUI_REST_COUNT)) && printf '%s\n' "${_TUI_REST[@]}"
+    return "$TUI_OK"
+  fi
+}
+
+ui_wait_key() {
+  local prompt=$1
+  if ui_available; then
+    tui_wait_key "$prompt"
     return $?
   fi
-  cat "$file" >&2
-  return $?
+  local answer=''
+  IFS= read -r answer || return "$TUI_CANCEL"
+  printf '%s\n' "$answer"
+  return "$TUI_OK"
 }
