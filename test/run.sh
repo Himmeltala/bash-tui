@@ -178,6 +178,19 @@ check_equal 'key: 分页空格翻页' 'page-down' "$_TUI_ACTION"
 _tui_engine_handle_key pager 'q'
 check_equal 'key: q 取消' 'cancel' "$_TUI_ACTION"
 
+_tui_view_reset
+_TUI_VIEW_MODE='menu'
+_tui_item_add 'a' '选项 A' ''
+_tui_item_add 'b' '选项 B' ''
+check_equal 'menu: 条目数' '2' "$_TUI_ITEMS_COUNT"
+_tui_engine_handle_key menu 'ENTER'
+check_equal 'menu: 回车动作' 'select' "$_TUI_ACTION"
+
+tui_menu '空菜单' '提示'
+check_status 'menu: 空列表报错' "$TUI_ERROR" "$?"
+tui_browse '空浏览' '提示' --
+check_status 'browse: 空列表报错' "$TUI_ERROR" "$?"
+
 tui_begin
 tui_begin
 check_equal 'core: 嵌套深度' '2' "$_TUI_DEPTH"
