@@ -20,7 +20,7 @@ _parse_hotkeys() {
         ;;
     esac
   done
-  _TUI_REST=("${rest[@]}")
+  _TUI_REST=("${rest[@]+"${rest[@]}"}")
   _TUI_REST_COUNT=${#rest[@]}
   return 0
 }

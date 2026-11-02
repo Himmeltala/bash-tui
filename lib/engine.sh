@@ -8,6 +8,7 @@ _TUI_ITEMS_PRIMARY=()
 _TUI_ITEMS_SECONDARY=()
 _TUI_ITEMS_STATE=()
 _TUI_ITEMS_COUNT=0
+_TUI_SELECTED=0
 
 _tui_view_reset() {
   _TUI_VIEW_MODE=''
@@ -18,6 +19,7 @@ _tui_view_reset() {
   _TUI_ITEMS_SECONDARY=()
   _TUI_ITEMS_STATE=()
   _TUI_ITEMS_COUNT=0
+  _TUI_SELECTED=0
   _TUI_HOTKEY_KEYS=()
   _TUI_HOTKEY_ACTIONS=()
   _TUI_HOTKEY_COUNT=0
@@ -49,6 +51,15 @@ _tui_item_add() {
   _TUI_ITEMS_SECONDARY+=("$secondary")
   _TUI_ITEMS_STATE+=("$state")
   _TUI_ITEMS_COUNT=$((_TUI_ITEMS_COUNT + 1))
+  return 0
+}
+
+_tui_selected_count() {
+  local i
+  _TUI_SELECTED=0
+  for ((i = 0; i < _TUI_ITEMS_COUNT; i++)); do
+    ((_TUI_ITEMS_STATE[i])) && _TUI_SELECTED=$((_TUI_SELECTED + 1))
+  done
   return 0
 }
 

@@ -191,6 +191,9 @@ check_status 'menu: 空列表报错' "$TUI_ERROR" "$?"
 tui_browse '空浏览' '提示' --
 check_status 'browse: 空列表报错' "$TUI_ERROR" "$?"
 
+printf 'q' | tui_menu 't' 'p' a 'A' >/dev/null 2>&1
+check_status 'menu: 非空取消' "$TUI_CANCEL" "$?"
+
 tui_begin
 tui_begin
 check_equal 'core: 嵌套深度' '2' "$_TUI_DEPTH"
