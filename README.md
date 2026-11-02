@@ -1,6 +1,6 @@
 # bash-tui
 
-bash 终端界面组件库，包含自绘菜单、复选、输入、确认与分页文本查看。
+bash 终端界面组件库，包含自绘菜单、勾选、浏览、分页、输入与确认。
 
 要求 bash 4.2 及以上。
 
@@ -12,19 +12,42 @@ source /path/to/bash-tui/bash-tui.sh
 
 画面写 stderr，结果写 stdout。
 
-## 按键
-
-↑↓ 移动，空格勾选，回车确认，q 取消，← 返回。列表行数超过 `TUI_PAGE_SIZE` 时用 `[` `]` 上下翻页。
-
 ## 接口
 
 | 函数 | 说明 |
 | --- | --- |
-| `tui_select` | 列表选择，模式为 `menu`、`checklist`、`all` |
+| `tui_menu` | 单选菜单 |
+| `tui_checklist` | 多选勾选 |
+| `tui_checklist_all` | 带“全部”开关的多选 |
+| `tui_browse` | 自定义主文本与说明文本的浏览列表，支持热键 |
+| `tui_pager` | 分页查看文件，支持热键 |
+| `tui_pager_lines` | 分页查看行数组，支持热键 |
 | `tui_input` | 单行输入 |
 | `tui_confirm` | 是否确认 |
-| `tui_textbox` | 分页查看文本文件 |
-| `ui_menu`、`ui_checklist`、`ui_checklist_all`、`ui_input`、`ui_yesno`、`ui_textbox` | 带无终端回退的包装 |
+| `tui_wait_key` | 等待一个按键 |
+| `ui_*` | 对应的无终端回退包装 |
+
+```bash
+tui_menu '标题' '提示' '标签' '文本' ...
+tui_checklist '标题' '提示' '标签' '文本' ON ...
+tui_checklist_all '标题' '提示' '标签' '文本' OFF ...
+tui_browse '标题' '提示' [--hotkey 键 动作]... -- '标签' '主文本' '说明文本' ...
+tui_pager '标题' '提示' [--hotkey 键 动作]... -- '文件'
+tui_pager_lines '标题' '提示' [--hotkey 键 动作]... -- '行' ...
+tui_input '标题' '提示' ['默认值']
+tui_confirm '标题' '提示'
+tui_wait_key '提示'
+```
+
+菜单、浏览与勾选把选中项的标签写到 stdout，勾选每行一个。
+
+## 按键
+
+↑↓ 或 k/j 移动，空格勾选（分页中翻页），回车确认，← 或 q 返回，`[` `]` 翻页。
+
+## 热键
+
+`--hotkey <键> <动作>` 可重复，放在 `--` 与条目之前。单字符键不区分大小写，命名键（如 `UP`、`LEFT`、`ENTER`）按名匹配。按下后把 `@hotkey:<动作>` 写到 stdout 并返回 `TUI_OK`。动作名不能以 `@hotkey:` 开头。
 
 ## 返回码
 
@@ -36,16 +59,22 @@ source /path/to/bash-tui/bash-tui.sh
 | `TUI_ERROR` | 3 | 参数或文件错误 |
 | `TUI_BACK` | 4 | 返回上一步 |
 
+`tui_confirm` 以 0/1 表示确认与取消。
+
+## 预选
+
+`TUI_PRESELECT` 按标签预勾选 `tui_checklist` 与 `tui_checklist_all` 的条目，多个标签以换行分隔。
+
 ## 配置
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
+| `UI_MODE` | `0` | 非 0 时 `ui_*` 走终端界面，否则走编号输入 |
 | `TUI_PRESELECT` | 空 | 预选标签，换行分隔 |
 | `TUI_LABEL_ALL` | `全部` | 全选行主文本 |
 | `TUI_LABEL_ALL_DESC` | `选中全部模块` | 全选行说明 |
 | `TUI_MIN_COLS` | `40` | 最小宽度 |
 | `TUI_ESC_TIMEOUT` | `0.05` | 转义序列超时 |
-| `TUI_PAGE_SIZE` | `0` | 列表一屏最多显示多少行，0 表示按终端高度铺满；超过后用 `[` `]` 翻页 |
 
 ## 验证
 

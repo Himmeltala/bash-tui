@@ -162,6 +162,17 @@ check_equal 'ui: 输入回退' '2' "$_out"
 _out=$(printf 'y\n' | ui_yesno '标题' '提示'; printf '%s' "$?")
 check_equal 'ui: 确认回退' '0' "$_out"
 
+_out=$(printf '1\n' | ui_checklist_all '标题' '提示' a A ON b B OFF)
+check_equal 'ui: 全选回退' 'a' "$_out"
+
+_out=$(printf '1\n' | ui_browse '标题' '提示' --hotkey r refresh -- a '主 A' '说明 A' b '主 B' '说明 B')
+check_equal 'ui: 浏览回退' 'a' "$_out"
+
+check_equal 'ui: 行分页回退' $'x\ny' "$(ui_pager_lines '标题' '提示' -- 'x' 'y' 2>/dev/null)"
+
+tui_browse '缺参热键' '提示' --hotkey r
+check_status 'browse: 热键缺参报错' "$TUI_ERROR" "$?"
+
 _tui_view_reset
 _tui_item_add 'p:TCP:8080' $'8080/TCP\t0.0.0.0:8080 java' ''
 check_equal 'items: 标签' 'p:TCP:8080' "${_TUI_ITEMS_TAGS[0]}"
