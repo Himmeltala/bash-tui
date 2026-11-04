@@ -6,6 +6,9 @@ readonly TUI_EMPTY=2
 readonly TUI_ERROR=3
 readonly TUI_BACK=4
 
+# 记录分列用的字段分隔符：制表符算 IFS 空白，连续两个会被并成一个，空字段会丢，所以用 ASCII 单元分隔符。
+readonly TUI_FS=$'\x1f'
+
 : "${TUI_PRESELECT:=}"
 : "${TUI_LABEL_ALL:=全部}"
 : "${TUI_LABEL_ALL_DESC:=选中全部模块}"

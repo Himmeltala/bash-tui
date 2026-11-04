@@ -203,6 +203,65 @@ check_equal 'ui: 浏览回退' 'a' "$_out"
 
 check_equal 'ui: 行分页回退' $'x\ny' "$(ui_pager_lines '标题' '提示' -- 'x' 'y' 2>/dev/null)"
 
+# 终端探测：非终端时置 0，有终端时置 1 只能靠 pty 测，这里只验证不会误判成 1。
+UI_MODE=1
+ui_detect
+check_equal 'ui: 探测非终端' '0' "$UI_MODE"
+
+# 条目文本：界面模式用制表符分主次，编号回退只留说明（名字已经在标签列里）。
+UI_MODE=0
+ui_item_text 'save' '保存当前文件'
+check_equal 'item: 回退只留说明' '保存当前文件' "$UI_ITEM_TEXT"
+UI_MODE=1
+ui_item_text 'save' '保存当前文件'
+check_equal 'item: 界面主次分列' $'save\t保存当前文件' "$UI_ITEM_TEXT"
+
+UI_MODE=0
+_out=$(printf '2\n' | ui_menu_named '标题' '提示' save '保存' quit '退出' 2>/dev/null)
+check_equal 'item: 命名菜单回退' 'quit' "$_out"
+ui_menu_named '标题' '提示' save >/dev/null 2>&1
+check_status 'item: 命名菜单缺说明报错' "$TUI_ERROR" "$?"
+
+# 可选勾选：没勾任何项也算成功，输出为空。
+_out=$(printf '\n' | ui_checklist_optional '标题' '提示' a 'A' OFF 2>/dev/null)
+check_status 'ui: 空勾选按成功' "$TUI_OK" "$?"
+check_equal 'ui: 空勾选无输出' '' "$_out"
+_out=$(printf '1\n' | ui_checklist_optional '标题' '提示' a 'A' OFF 2>/dev/null)
+check_equal 'ui: 勾选照常输出' 'a' "$_out"
+
+# 标签去重：不重名原样，重名按展示路径的尾巴加长到组内可分；尾巴等于 id 时继续加长。
+check_equal 'tags: 不重名原样' $'proj\nalpha' "$(ui_unique_tags proj /w/proj alpha /w/alpha)"
+check_equal 'tags: 重名按尾巴分段' $'proj@a/app\nproj@b/app\nproj@a/lib' \
+  "$(ui_unique_tags proj /w/a/app proj /w/b/app proj /w/a/lib)"
+check_equal 'tags: 尾巴等于 id 继续加长' $'app@w/app\napp@b/appx' "$(ui_unique_tags app /w/app app /w/b/appx)"
+ui_unique_tags proj >/dev/null 2>&1
+check_status 'tags: 缺展示路径报错' "$TUI_ERROR" "$?"
+
+# 勾选记忆：写回文件、读进 TUI_PRESELECT，文件不在时清空。
+_presel=$(mktemp)
+ui_preselect_save "$_presel" a b
+check_equal 'preselect: 写回文件' $'a\nb' "$(<"$_presel")"
+ui_preselect_load "$_presel"
+check_equal 'preselect: 读进预选' $'a\nb' "$TUI_PRESELECT"
+ui_preselect_load /no/such/file
+check_equal 'preselect: 文件不在时清空' '' "$TUI_PRESELECT"
+rm -f "$_presel"
+ui_preselect_save '' a >/dev/null 2>&1
+check_status 'preselect: 缺路径报错' "$TUI_ERROR" "$?"
+
+# 暂停：没有终端时直接返回，不读 stdin，免得吃掉管道里后面的菜单按键。
+UI_MODE=0
+ui_pause
+check_status 'ui: 无终端暂停返回 0' '0' "$?"
+_got=$(printf 'q\n' | bash -c 'source "$1"; UI_MODE=0; ui_pause; IFS= read -r x; printf "%s" "$x"' _ "$_root/bash-tui.sh" 2>/dev/null)
+check_equal 'ui: 无终端暂停不吃输入' 'q' "$_got"
+UI_MODE=1
+printf 'q' | ui_pause '继续' >/dev/null 2>&1
+check_status 'ui: 暂停按 q 返回 1' '1' "$?"
+printf 'x' | ui_pause '继续' >/dev/null 2>&1
+check_status 'ui: 暂停按其他键返回 0' '0' "$?"
+UI_MODE=0
+
 tui_browse '缺参热键' '提示' --hotkey r
 check_status 'browse: 热键缺参报错' "$TUI_ERROR" "$?"
 
